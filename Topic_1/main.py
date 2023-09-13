@@ -11,6 +11,8 @@ import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime
+from dateutil.relativedelta import relativedelta
+from capm_tool import capm_calculator
 
 
 def read_price_data(stock_symbol, start_date, end_date, interval):
@@ -38,9 +40,9 @@ index_symbol = "^GSPC" # Index symbol (by default "^GSPC" for the S&P500 index)
 stock_symbol = "MSFT" # Stock symbol
 
 # Generate list of trading days
-start_date = datetime.datetime(2021, 8, 1)
-end_date = datetime.datetime(2021, 9, 1)
-interval = '1d' # Date interval, by default daily ('1d')
+start_date = datetime.date.today() - relativedelta(years=5)
+end_date = datetime.date.today()
+interval = '1mo' # Date interval, by default daily ('1d')
 date_list = get_date_list(index_symbol, start_date, end_date, interval=interval)
 
 # Generate empty dataframe
@@ -62,6 +64,8 @@ try:
     df[column_header_stock] = price_series  
 except:
     print('Import failed')
+
+capm_calculator(df)
 
 # Print dataframe
 df.plot()
