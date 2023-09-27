@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,15 +9,18 @@ from scipy.stats import norm
 def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     time_step = T / n
 
+    # Calculate risk-free return rate per time step instead of per year (continuous compound)
+    # TODO: maybe add 1 to this to get e.g. 1.05 instead of 0.05
+    r_per_time_step = math.e**r*time_step
+
     # Compute u and d
-    """ Fill in appropriate formulas"""
-    u = 1
-    d = 1
+    u = math.e**(v*sqrt(time_step))
+    d = math.e**-(v*sqrt(time_step))
 
     # Compute p and q
     """ Fill in appropriate formulas"""
     p = 1
-    q = 1
+    q = (r_per_time_step - d) / (u - d)
 
     # Create empty matrix for stock prices
     stock_price = np.zeros((n + 1, n + 1))
