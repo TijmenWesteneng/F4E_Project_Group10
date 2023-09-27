@@ -9,9 +9,9 @@ from scipy.stats import norm
 def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     time_step = T / n
 
-    # Calculate risk-free return rate per time step instead of per year (continuous compound)
-    # TODO: maybe add 1 to this to get e.g. 1.05 instead of 0.05
-    r_per_time_step = math.e**r*time_step
+    # Calculate risk-free return rate per time step instead of per year
+    # r_per_time_step = (r + 1)**time_step
+    r_per_time_step = math.e**(r*time_step)
 
     # Compute u and d
     u = math.e**(v*sqrt(time_step))
@@ -44,35 +44,48 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     # For final time step, compute option value based on stock price and strike price
     for i in range(n + 1):
         if call_put == 'Call':
-            """Fill in appropriate formula"""
-            option_value[n, i] = 1
+            if stock_price[n, i] <= K:
+                option_value[n, i] = 0
+            else:
+                option_value[n, i] = stock_price[n, i] - K
         elif call_put == 'Put':
-            """Fill in appropriate formula"""
-            option_value[n, i] = 1
+            if stock_price[n, i] >= K:
+                option_value[n, i] = 0
+            else:
+                option_value[n, i] = K - stock_price[n, i]
 
-            # Compute discount factor per time step
-    """Fill in appropriate formula"""
-    discount = 1
+    # Compute discount factor per time step
+    discount = r_per_time_step
 
     # Recursively compute option value at time 0
     for i in range(n - 1, -1, -1):
         for j in range(i + 1):
-            """ Fill in appropriate formulas for the different option types"""
-            option_value[i, j] = 1
 
-    return option_value[0, 0], df_stock_price
+            option_value[i, j] = (1 / discount) * (q*option_value[i + 1, j] + (1 - q) * option_value[i + 1, j + 1])
+
+            if exercise_policy == 'American':
+                if call_put == 'Call':
+                    if option_value[i, j] < stock_price[i, j] - K:
+                        option_value[i, j] = stock_price[i, j] - K
+                elif call_put == 'Put':
+                    if option_value[i, j] < K - stock_price[i, j]:
+                        option_value[i, j] = K - stock_price[i, j]
+
+    df_option_value = pd.DataFrame(data=option_value).T
+    return option_value[0, 0], df_stock_price, df_option_value
 
 
 # Test case: the following settings should yield an option price of 4.04
-# S0 = 100
-# K = 105
-# v = 0.1
-# T = 1
-# r = 0.05
-# n = 10
-# call_put = 'Call'
-# exercise_policy = 'European'
+S0 = 100
+K = 105
+v = 0.1
+T = 1
+r = 0.05
+n = 10
+call_put = 'Call'
+exercise_policy = 'European'
 
+"""
 S0 = 1  # Stock price
 K = 1  # Strike price
 v = 1  # Volatility
@@ -81,11 +94,13 @@ r = 1  # Risk-free rate
 n = 10  # Number of time steps
 call_put = 'Call'  # Option type ('Call' or 'Put')
 exercise_policy = 'European'  # Option type ('European' or 'American')
+"""
 
-binomial_price, df = binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy)
+binomial_price, df, df_option = binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy)
 
 print('Binomial lattice price: %.2f' % binomial_price)
 print(df)
+print(df_option)
 
 
 def black_scholes_vega(S, K, T, r, v):
@@ -105,7 +120,7 @@ def compute_implied_volatility(true_price, S, K, r, T, n, call_put, exercise_pol
 
     for i in range(MAX_NO_ITERATIONS):
         # Compute price with binomial lattice, using current estimate for implied volatility
-        model_price, _ = binomial_lattice(S, K, r, implied_vol, T, n, call_put, exercise_policy)
+        model_price, _, _ = binomial_lattice(S, K, r, implied_vol, T, n, call_put, exercise_policy)
 
         # Compute difference between model price and market price (the root)
         diff = model_price - true_price
@@ -151,7 +166,7 @@ market_price = 1 # Set true market price of the option here
 implied_vol = compute_implied_volatility(market_price, S0, K, r, T, n, call_put, exercise_policy)
 
 # Compute binomial lattice price with implied volatility
-binomial_price, _ = binomial_lattice(S0, K, r, implied_vol, T, n, call_put, exercise_policy)
+binomial_price, _, _ = binomial_lattice(S0, K, r, implied_vol, T, n, call_put, exercise_policy)
 
 print ('Implied volatility: %.2f%%' % (implied_vol * 100))
 print ('True market price: %.2f' % market_price)
