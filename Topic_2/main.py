@@ -74,6 +74,13 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     return option_value[0, 0], df_stock_price, df_option_value
 
 
+def black_scholes(S0, K, v, T, r):
+    r_maturity = math.e**(r*T)
+    d1 = math.log(S0/(K/r_maturity), math.e) / v * sqrt(T) + v*sqrt(T)/2
+    d2 = d1 - v*sqrt(T)
+    return (norm.cdf(d1) * S0) - (norm.cdf(d2) * (K / r_maturity))
+
+
 # Test case: the following settings should yield an option price of 4.04
 S0 = 100
 K = 105
@@ -96,8 +103,13 @@ exercise_policy = 'European'  # Option type ('European' or 'American')
 """
 
 binomial_price, df, df_option = binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy)
+black_scholes_price = black_scholes(S0, K, v, T, r)
 
 print('Binomial lattice price: %.2f' % binomial_price)
+
+if call_put == 'Call':
+    print('Black-Scholes price: %.2f' % black_scholes_price)
+
 print(df)
 print(df_option)
 
