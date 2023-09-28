@@ -10,7 +10,6 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     time_step = T / n
 
     # Calculate risk-free return rate per time step instead of per year
-    # r_per_time_step = (r + 1)**time_step
     r_per_time_step = math.e**(r*time_step)
 
     # Compute u and d
@@ -19,8 +18,8 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
 
     # Compute p and q
     """ Fill in appropriate formulas"""
-    p = 1
-    q = (r_per_time_step - d) / (u - d)
+    p = (r_per_time_step - d) / (u - d)
+    q = 0
 
     # Create empty matrix for stock prices
     stock_price = np.zeros((n + 1, n + 1))
@@ -55,13 +54,13 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
                 option_value[n, i] = K - stock_price[n, i]
 
     # Compute discount factor per time step
-    discount = r_per_time_step
+    discount = r_per_time_step - q
 
     # Recursively compute option value at time 0
     for i in range(n - 1, -1, -1):
         for j in range(i + 1):
 
-            option_value[i, j] = (1 / discount) * (q*option_value[i + 1, j] + (1 - q) * option_value[i + 1, j + 1])
+            option_value[i, j] = (1 / discount) * (p*option_value[i + 1, j] + (1 - p) * option_value[i + 1, j + 1])
 
             if exercise_policy == 'American':
                 if call_put == 'Call':
