@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from white_noise import get_white_noise_array
 
+# natte sokken
+
 
 stock_symbol = "F"  # Stock symbol
 
