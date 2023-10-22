@@ -1,4 +1,5 @@
 from bot import *
+from simulator import Simulator
 
 # make bot
 test = BotTemplate(100000, 10)

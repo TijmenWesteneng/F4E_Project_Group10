@@ -8,6 +8,8 @@ pandas = "*"
 yfinance = "*"
 matplotlib = "*"
 scipy = "*"
+requests = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 
