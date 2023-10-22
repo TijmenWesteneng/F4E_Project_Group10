@@ -10,11 +10,11 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     time_step = T / n
 
     # Calculate risk-free return rate per time step instead of per year
-    r_per_time_step = math.e**(r*time_step)
+    r_per_time_step = math.e ** (r * time_step)
 
     # Compute u and d
-    u = math.e**(v*sqrt(time_step))
-    d = math.e**-(v*sqrt(time_step))
+    u = math.e ** (v * sqrt(time_step))
+    d = math.e ** -(v * sqrt(time_step))
 
     # Compute p and q
     """ Fill in appropriate formulas"""
@@ -60,7 +60,7 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
     for i in range(n - 1, -1, -1):
         for j in range(i + 1):
 
-            option_value[i, j] = (1 / discount) * (p*option_value[i + 1, j] + (1 - p) * option_value[i + 1, j + 1])
+            option_value[i, j] = (1 / discount) * (p * option_value[i + 1, j] + (1 - p) * option_value[i + 1, j + 1])
 
             if exercise_policy == 'American':
                 if call_put == 'Call':
@@ -75,9 +75,9 @@ def binomial_lattice(S0, K, r, v, T, n, call_put, exercise_policy):
 
 
 def black_scholes(S0, K, v, T, r):
-    r_maturity = math.e**(r*T)
-    d1 = math.log(S0/(K/r_maturity), math.e) / v * sqrt(T) + v*sqrt(T)/2
-    d2 = d1 - v*sqrt(T)
+    r_maturity = math.e ** (r * T)
+    d1 = math.log(S0 / (K / r_maturity), math.e) / v * sqrt(T) + v * sqrt(T) / 2
+    d2 = d1 - v * sqrt(T)
     return (norm.cdf(d1) * S0) - (norm.cdf(d2) * (K / r_maturity))
 
 
@@ -110,8 +110,9 @@ print('Binomial lattice price: %.2f' % binomial_price)
 if call_put == 'Call':
     print('Black-Scholes price: %.2f' % black_scholes_price)
 
-print(df)
-print(df_option)
+
+# print(df)
+# print(df_option)
 
 
 def black_scholes_vega(S, K, T, r, v):
@@ -150,35 +151,77 @@ def compute_implied_volatility(true_price, S, K, r, T, n, call_put, exercise_pol
 
 
 # Test case: the following settings should yield an implied volatility of 3.82%
-#S0 = 100
-#K = 100
-#r = 0.05
-#v = 0.1
-#T = 1
-#n = 10
-#call_put = 'Call'
-#exercise_policy = 'European'
+# S0 = 100
+# K = 100
+# r = 0.05
+# v = 0.1
+# T = 1
+# n = 10
+# call_put = 'Call'
+# exercise_policy = 'European'
 
-#market_price = 5 # Set true market price of the option here
+# market_price = 5 # Set true market price of the option here
 
 # Input parameters
-S0 = 1
-K = 1
-r = 1
-v = 1
-T = 1
-n = 10
-call_put = 'Call'
-exercise_policy = 'European'
+# S0 = 1
+# K = 1
+# r = 1
+# v = 1
+# T = 1
+# n = 10
+# call_put = 'Call'
+# exercise_policy = 'European'
 
-market_price = 1 # Set true market price of the option here
+# market_price = 1 # Set true market price of the option here
 
 # Compute implied volatility using Newton-Raphson method
-implied_vol = compute_implied_volatility(market_price, S0, K, r, T, n, call_put, exercise_policy)
+# implied_vol = compute_implied_volatility(market_price, S0, K, r, T, n, call_put, exercise_policy)
 
 # Compute binomial lattice price with implied volatility
-binomial_price, _, _ = binomial_lattice(S0, K, r, implied_vol, T, n, call_put, exercise_policy)
+# binomial_price, _, _ = binomial_lattice(S0, K, r, implied_vol, T, n, call_put, exercise_policy)
 
-print ('Implied volatility: %.2f%%' % (implied_vol * 100))
-print ('True market price: %.2f' % market_price)
-print ('Binomial lattice price: %.2f' % binomial_price)
+# print ('Implied volatility: %.2f%%' % (implied_vol * 100))
+# print ('True market price: %.2f' % market_price)
+# print ('Binomial lattice price: %.2f' % binomial_price)
+
+# Option chain implied volatility calculations
+r = 0.46
+n = 12
+T = 1
+SharePrice = [244.88, 12.59, 3086.58, 102.85, 244.88, 12.59, 3086.58, 102.85, 3086.58, 3086.58]
+MarketPrice = [4.99, 0.01, 79.80, 1.21, 27.67, 3.49, 99.5, 5.05, 74, 77]  # Puts
+StrikePrice = [225.00, 8, 3050, 97, 270, 16, 3120, 106, 3070.00, 3075.00]
+call_put = 'Put'
+exercise_policy = 'European'
+implied_vol = []
+
+for i in range(len(SharePrice)):
+    implied_vol.append(compute_implied_volatility(MarketPrice[i], SharePrice[i], StrikePrice[i], r, T, n,
+                                                  call_put, exercise_policy))
+
+print(implied_vol)
+
+# Option chain by binomial lattice
+deviation = 0.01  # deviation from Market Price in relatively e.g. 0.01 is 1% difference
+calculated_vol = []
+
+start = 0.1
+end = 1.2
+step = 0.0001
+for i in range(len(SharePrice)):
+    for j in range(int(start/step), int(end/step) + 1):
+        Vol_temp = j * step
+        Market_temp, *_ = binomial_lattice(SharePrice[i], StrikePrice[i], r, Vol_temp, T, n, call_put, exercise_policy)
+        if abs((Market_temp - MarketPrice[i])/MarketPrice[i]) < deviation:
+            calculated_vol.append(Vol_temp)
+            break
+
+print(calculated_vol)
+
+# Graph
+# plt.scatter(x, y, marker='o')
+plt.scatter(StrikePrice, implied_vol, marker='o')
+plt.scatter(StrikePrice, calculated_vol, marker='x')
+plt.xlabel('Strike level')
+plt.ylabel('Implied volatility')
+plt.show()
