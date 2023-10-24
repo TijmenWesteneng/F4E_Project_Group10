@@ -12,7 +12,7 @@ class Trainer:
         :param start_cash: amount of cash to start with
         :param start_date: date to start the simulator
         :param end_date: date to end the simulator
-        :param interval: interval between time steps
+        :param interval: interval between time steps e.g. 1h or 1d
         """
 
         # Create the bots with a threshold
@@ -29,4 +29,4 @@ class Trainer:
 
         # Temporary code
         for bot in self.bot_list:
-            print(bot.value)
+            print(bot.alfa, ":", bot.value)
