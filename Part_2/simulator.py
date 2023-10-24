@@ -40,20 +40,64 @@ class Simulator:
     def sim_cycle(self, stock_data):
         print(stock_data)
 
-    # TODO: Make get stock data able to get more data than the max of yfinance by looping
     def get_stock_data(self):
         """Gets stock data from yahoo finance and puts it in a dataframe"""
         tickers = get_sp500_tickers(self.stock_amount)
 
-        filename = str(str(self.stock_amount) + "-" + str(time.mktime(self.start_date.timetuple())) + "-" +
-                       str(time.mktime(self.end_date.timetuple())) + ".csv")
+        filename = str(str(self.stock_amount) + "_" + self.interval + "_" +
+                       self.start_date.strftime("%m-%d-%Y") + "_" +
+                       self.end_date.strftime("%m-%d-%Y") + ".csv")
 
         if not self.load_df(filename).empty:
             return self.load_df(filename)
         else:
-            stock_data = self.read_price_data(tickers, self.start_date, self.end_date, self.interval)
+            stock_data = self.download_stock_data_loop(tickers, self.start_date, self.end_date, self.interval)
             self.save_df(stock_data, filename)
             return stock_data
+
+    def download_stock_data_loop(self, tickers, start_date, end_date, interval):
+        """Downloads stock data from yahoo finance using loops if more than max data_amount per request is needed"""
+        df_list = list()
+        timespan = end_date - start_date
+        days = timespan.days
+
+        if interval == "1m":
+            if days <= 7:
+                return self.read_price_data(tickers, start_date, end_date, interval)
+            else:
+                current_start_date = start_date
+                current_end_date = current_start_date + relativedelta(days=7)
+                while current_end_date < end_date:
+                    df = self.read_price_data(tickers, current_start_date, current_end_date, interval)
+                    df_list.append(df)
+                    current_start_date = current_end_date
+                    current_end_date = current_start_date + relativedelta(days=7)
+
+                if current_start_date != end_date:
+                    df = self.read_price_data(tickers, current_start_date, end_date, interval)
+                    df_list.append(df)
+
+        elif interval == "2m" or interval == "5m" or interval == "15m" or interval == "30m" or interval == "60m" \
+                or interval == "90m" or interval == "1h":
+            if days <= 60:
+                return self.read_price_data(tickers, start_date, end_date, interval)
+            else:
+                current_start_date = start_date
+                current_end_date = current_start_date + relativedelta(days=60)
+                while current_end_date < end_date:
+                    df = self.read_price_data(tickers, current_start_date, current_end_date, interval)
+                    df_list.append(df)
+                    current_start_date = current_end_date
+                    current_end_date = current_start_date + relativedelta(days=60)
+
+                if current_start_date != end_date:
+                    df = self.read_price_data(tickers, current_start_date, end_date, interval)
+                    df_list.append(df)
+
+        else:
+            return self.read_price_data(tickers, start_date, end_date, interval)
+
+        return pd.concat(df_list)
 
     def read_price_data(self, stock_symbol, start_date, end_date, interval):
         """Imports price data from Yahoo Finance"""
@@ -77,5 +121,5 @@ class Simulator:
         return pd.read_csv(filename)
 
 
-sim = Simulator("bot_array", 10, datetime.date.today() - relativedelta(days=60), datetime.date.today(), '1h')
+sim = Simulator("bot_arr", 10, datetime.date(2023, 10, 23) - relativedelta(days=121), datetime.date(2023, 10, 23), '1h')
 sim.simulate()
