@@ -127,7 +127,7 @@ class Simulator:
         if not os.path.isfile(filename):
             return pd.DataFrame
 
-        return pd.read_csv(filename)
+        return pd.read_csv(filename, index_col=0)
 
 
 # sim = Simulator("bot_arr", 10, datetime.date(2023, 10, 23) - relativedelta(days=121), datetime.date(2023, 10, 23), '1h')

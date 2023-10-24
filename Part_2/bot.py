@@ -33,8 +33,11 @@ class BotTemplate:
 
         for i in self.stocks:
             stock_amount = self.stocks[i]
-            stock_price = hist_data[i].iloc[-1]
+            stock_price_row = hist_data.iloc[-1]
+            stock_price = stock_price_row[i]
             worth = worth + stock_amount * stock_price
+
+        self.value = worth
 
 
 class BotMovingAverage(BotTemplate):
@@ -62,15 +65,15 @@ class BotMovingAverage(BotTemplate):
 
         # This is temporary trade function
         key = moving_average.index[0]  # Get key from first column
-        current_value = hist_data.iloc[-1].values
+        current_value = hist_data.iloc[-1].values[0]
 
         # If the moving average is larger than the current value of the stock
         if moving_average.at[key] >= current_value:
             # If stock is not bought yet buy
             if self.stocks[key] == 0:
                 # Buy
-                value = math.floor(self.cash / current_value)
-                stock_amount = value * current_value
+                stock_amount = math.floor(self.cash / current_value)
+                value = stock_amount * current_value
                 self.stocks[key] = self.stocks[key] + stock_amount  # add stock
                 self.cash = self.cash - value  # subtract cash
 
