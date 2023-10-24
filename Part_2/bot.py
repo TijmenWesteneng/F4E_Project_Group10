@@ -12,7 +12,7 @@ class BotTemplate:
         :param stock_size: integer of the amount of unique stocks the program will feed to the bot
         """
         self.cash = start_cash
-        self.stocks = pd.DataFrame
+        self.stocks = dict()
         self.value = self.cash
 
         # TODO: keep track of selling and buying behavior on each stock
@@ -31,8 +31,8 @@ class BotTemplate:
         """
         worth = self.cash
 
-        for i in self.stocks.columns:
-            stock_amount = self.stocks[i].iloc[0]
+        for i in self.stocks:
+            stock_amount = self.stocks[i]
             stock_price = hist_data[i].iloc[-1]
             worth = worth + stock_amount * stock_price
 
@@ -55,15 +55,17 @@ class BotMovingAverage(BotTemplate):
         """
         moving_average = self.mov_avg(hist_data)
         # If moving_average failed, just return
+        """
         if moving_average == -1:
             return
+        """
 
         # This is temporary trade function
-        key = moving_average.columns[0]  # Get key from first column
-        current_value = hist_data.loc[len(hist_data.iloc[:, 0]) - 1, key]
+        key = moving_average.index[0]  # Get key from first column
+        current_value = hist_data.iloc[-1].values
 
         # If the moving average is larger than the current value of the stock
-        if moving_average[key] >= current_value:
+        if moving_average.at[key] >= current_value:
             # If stock is not bought yet buy
             if self.stocks[key] == 0:
                 # Buy
@@ -94,9 +96,11 @@ class BotMovingAverage(BotTemplate):
         reversed_hist_data = hist_data.apply(lambda col: col[::-1])
 
         # Check if the amount of data points is enough for this value of alfa
+        """
         column_size = len(hist_data.iloc[:, 0])
         if column_size < self.alfa:
             return -1
+        """
 
         # Calculate moving average
         moving_averages = reversed_hist_data.rolling(window=self.alfa).mean()  # Calculate sliding window mov avg
