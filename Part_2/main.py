@@ -1,18 +1,12 @@
-from bot import *
-from simulator import Simulator
+from trainer import *
 
-# make bot
-test = BotTemplate(100000, 10)
+bot_amount = 1
+stock_amount = 1
+start_cash = 100000
+start_date = 0
+end_date = 0
+interval = 0
 
-# test if bot works
-print(test.stocks)
+trainer = Trainer(bot_amount, stock_amount, start_cash, start_date, end_date, interval)
 
-# create a couple of bots systematically
-BOT_object = []
-for i in range(5):
-    BOT = BotTemplate(100000, i)
-    BOT_object.append(BOT)
-
-# see if creating bots systematically works
-for i in range(5):
-    print(BOT_object[i].stocks)
+trainer.simulate()
