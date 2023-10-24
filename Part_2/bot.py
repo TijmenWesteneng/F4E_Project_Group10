@@ -12,7 +12,7 @@ class BotTemplate:
         :param stock_size: integer of the amount of unique stocks the program will feed to the bot
         """
         self.cash = start_cash
-        self.stocks = pd.DataFrame
+        self.stocks = dict()
         self.value = self.cash
 
         # TODO: keep track of selling and buying behavior on each stock
@@ -22,6 +22,7 @@ class BotTemplate:
         :param name_list: list with all names of the stocks
         """
         for name in name_list:
+            print(name)
             self.stocks[name] = 0
 
     def calc_worth(self, hist_data: pd.DataFrame):
