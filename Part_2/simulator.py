@@ -34,11 +34,20 @@ class Simulator:
         print(self.stock_data)
 
     def simulate(self):
+        """Runs the whole simulation by adding extra time steps and then calling sim_cycle"""
+        # Initiate all bots by giving them the stocks where they are going to get the data from
+        for i in range(len(self.bot_array)):
+            self.bot_array[i].initiate(self.stock_data.columns.tolist())
+
+        # Run all sim cycles by adding a time datapoint in each cycle
         for i in range(self.history, len(self.stock_data.index)):
             self.sim_cycle(self.stock_data.iloc[:i])
 
-    def sim_cycle(self, stock_data):
-        print(stock_data)
+    def sim_cycle(self, current_stock_data):
+        """Everything that happens during one cycle of the simulation"""
+        # Looping over all the bots and giving them the current stock data, so they can trade
+        for i in range(len(self.bot_array)):
+            self.bot_array[i].trade(current_stock_data)
 
     def get_stock_data(self):
         """Gets stock data from yahoo finance and puts it in a dataframe"""
@@ -121,5 +130,5 @@ class Simulator:
         return pd.read_csv(filename)
 
 
-sim = Simulator("bot_arr", 10, datetime.date(2023, 10, 23) - relativedelta(days=121), datetime.date(2023, 10, 23), '1h')
-sim.simulate()
+# sim = Simulator("bot_arr", 10, datetime.date(2023, 10, 23) - relativedelta(days=121), datetime.date(2023, 10, 23), '1h')
+# sim.simulate()
