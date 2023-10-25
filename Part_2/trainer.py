@@ -30,6 +30,5 @@ class Trainer:
         # Temporary code
         for bot in self.bot_list:
             print(bot.alfa, ":", bot.value)
-            print("Historical trade data: ", bot.hist_trade)
-            print("Historical cash data: ", bot.hist_cash)
-            print("Historical value data: ", bot.hist_value)
+            print("Historical trade data: \n", bot.hist_trade)
+
