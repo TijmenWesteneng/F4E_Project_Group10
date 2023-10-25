@@ -11,9 +11,13 @@ class BotTemplate:
         :param start_cash: double of amount of cash that the bot starts with in the beginning
         :param stock_size: integer of the amount of unique stocks the program will feed to the bot
         """
-        self.cash = start_cash
-        self.stocks = dict()
-        self.value = self.cash
+        self.cash = start_cash  # Cash available for bot
+        self.stocks = dict()  # Amount of stocks the bot has
+        self.value = self.cash  # The total value the bot possesses
+
+        self.hist_trade = pd.DataFrame()  # All the trade history of the bot
+        self.hist_value = [self.cash]  # All the historical value of the bot
+        self.hist_cash = [self.cash]  # All the historical cash of the bot
 
         # TODO: keep track of selling and buying behavior on each stock
     def initiate(self, name_list: list):
@@ -23,6 +27,7 @@ class BotTemplate:
         """
         for name in name_list:
             self.stocks[name] = 0
+            self.hist_trade[name] = 0
 
     def calc_worth(self, hist_data: pd.DataFrame):
         """
@@ -58,18 +63,16 @@ class BotMovingAverage(BotTemplate):
         """
         moving_average = self.mov_avg(hist_data)
         # If moving_average failed, just return
-        """
-        if moving_average == -1:
+        if isinstance(moving_average, int):
             return
-        """
 
-        # This is temporary trade function
-        key = moving_average.index[0]  # Get key from first column
-        current_value = hist_data.iloc[-1].values[0]
+        # This is temporary trade function (only works for 1 stock)
+        key = moving_average.index[0]  # Get key from first stock
+        current_value = hist_data.iloc[-1].values[0]  # select last value as current value
 
         # If the moving average is larger than the current value of the stock
         if moving_average.at[key] >= current_value:
-            # If stock is not bought yet buy
+            # If stock is not bought yet, buy
             if self.stocks[key] == 0:
                 # Buy
                 stock_amount = math.floor(self.cash / current_value)
@@ -77,17 +80,54 @@ class BotMovingAverage(BotTemplate):
                 self.stocks[key] = self.stocks[key] + stock_amount  # add stock
                 self.cash = self.cash - value  # subtract cash
 
+                # Add trade data to hist_trade
+                new_row = {key: stock_amount}
+                for column in hist_data.columns[1:]:
+                    new_row[column] = 0  # Make all other columns zero
+                # Add new_row to history trade
+                self.hist_trade.loc[len(self.hist_trade)] = new_row
+
+            # If stock is already bought
+            else:
+                # Add zero to hist_trade
+                new_row = {key: 0}
+                for column in hist_data.columns[1:]:
+                    new_row[column] = 0  # Make all other columns zero
+                # Add new_row to history trade
+                self.hist_trade.loc[len(self.hist_trade)] = new_row
+
         # If the moving average is smaller than the current value of the stock
         else:
             # If stock is already bought
             if self.stocks[key] != 0:
                 # Sell
                 value = self.stocks[key] * current_value
+                stock_amount = self.stocks[key]
                 self.stocks[key] = 0
                 self.cash = self.cash + value
 
+                # Add trade data to hist_trade
+                new_row = {key: -1*stock_amount}
+                for column in hist_data.columns[1:]:
+                    new_row[column] = 0  # Make all other columns zero
+                # Add new_row to history trade
+                self.hist_trade.loc[len(self.hist_trade)] = new_row
+
+            # If stock is not bought yet
+            else:
+                # Add zero to hist_trade
+                new_row = {key: 0}
+                for column in hist_data.columns[1:]:
+                    new_row[column] = 0  # Make all other columns zero
+                # Add new_row to history trade
+                self.hist_trade.loc[len(self.hist_trade)] = new_row
+
         # Calculate the total value of the portfolio
         self.calc_worth(hist_data)
+
+        self.hist_value.append(self.value)
+        self.hist_cash.append(self.cash)
+
 
     def mov_avg(self, hist_data: pd.DataFrame):
         """
@@ -99,11 +139,9 @@ class BotMovingAverage(BotTemplate):
         reversed_hist_data = hist_data.apply(lambda col: col[::-1])
 
         # Check if the amount of data points is enough for this value of alfa
-        """
         column_size = len(hist_data.iloc[:, 0])
         if column_size < self.alfa:
             return -1
-        """
 
         # Calculate moving average
         moving_averages = reversed_hist_data.rolling(window=self.alfa).mean()  # Calculate sliding window mov avg
