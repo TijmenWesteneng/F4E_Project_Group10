@@ -10,6 +10,7 @@ matplotlib = "*"
 scipy = "*"
 requests = "*"
 beautifulsoup4 = "*"
+plotly = "==5.18.0"
 
 [dev-packages]
 

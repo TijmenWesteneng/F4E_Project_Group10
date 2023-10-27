@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import plotly.express as px
 
 import os.path
 import datetime
@@ -8,11 +9,12 @@ import time
 from dateutil.relativedelta import relativedelta
 
 from sp500 import get_sp500_tickers
+from bot import *
 
 
 class Simulator:
 
-    def __init__(self, bot_array, stock_amount: int, start_date, end_date, interval):
+    def __init__(self, bot_array: list[BotTemplate], stock_amount: int, start_date, end_date, interval):
         """
         Creates a simulator object using specified parameters
         :param bot_array: array with bot objects used in simulation
@@ -42,6 +44,9 @@ class Simulator:
         # Run all sim cycles by adding a time datapoint in each cycle
         for i in range(self.history, len(self.stock_data.index)):
             self.sim_cycle(self.stock_data.iloc[:i])
+
+        # Plot the graphs using plotly
+        self.plot_trade_graphs()
 
     def sim_cycle(self, current_stock_data):
         """Everything that happens during one cycle of the simulation"""
@@ -107,6 +112,16 @@ class Simulator:
             return self.read_price_data(tickers, start_date, end_date, interval)
 
         return pd.concat(df_list)
+
+    def plot_trade_graphs(self):
+        # Looping over all the bots to get the data needed to plot
+        df_bot_values = pd.DataFrame()
+        for bot in self.bot_array:
+            df_bot_values[bot.alfa] = bot.hist_trade['value']
+            df_bot_values['date'] = list(bot.hist_trade.index.values)
+
+        fig = px.line(df_bot_values, x='date', y=df_bot_values.columns)
+        fig.show()
 
     def read_price_data(self, stock_symbol, start_date, end_date, interval):
         """Imports price data from Yahoo Finance"""
