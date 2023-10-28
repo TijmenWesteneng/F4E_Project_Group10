@@ -43,6 +43,20 @@ class BotTemplate:
 
         self.value = worth
 
+    def buy(self, stock_ticker, hist_data):
+        current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
+        stock_amount = math.floor(self.cash / current_stock_price)
+        value = stock_amount * current_stock_price
+        self.stocks[stock_ticker] = self.stocks[stock_ticker] + stock_amount  # add stock
+        self.cash = self.cash - value  # subtract cash
+
+    def sell(self, stock_ticker, hist_data):
+        current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
+        value = self.stocks[stock_ticker] * current_stock_price
+        stock_amount = self.stocks[stock_ticker]
+        self.stocks[stock_ticker] = 0
+        self.cash = self.cash + value
+
 
 class BotMovingAverage(BotTemplate):
     def __init__(self, start_cash, stock_size: int, window_size: int):
