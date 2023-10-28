@@ -120,6 +120,11 @@ class Simulator:
             df_bot_values[bot.alfa] = bot.hist_trade['value']
             df_bot_values['date'] = list(bot.hist_trade.index.values)
 
+        # Getting stock data to plot value if stocks bought at beginning and not sold
+        df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]]
+        df_bot_values[self.stock_data.columns[0]] = \
+            df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[0, 0])
+
         fig = px.line(df_bot_values, x='date', y=df_bot_values.columns)
         fig.show()
 
