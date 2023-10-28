@@ -57,6 +57,26 @@ class BotTemplate:
         self.stocks[stock_ticker] = 0
         self.cash = self.cash + value
 
+    def save_hist(self, key, stock_amount, date):
+        """
+        Save history for each time step
+        :param key: name of stock
+        :param stock_amount: amount of stock bought or sold (negative values is sold)
+        :param date: the time stamp for this save
+        """
+        # make new entry and fill with correct keys
+        new_entry = pd.Series(self.stocks).astype('float64')
+        new_entry['cash'] = self.cash
+        new_entry['value'] = self.value
+        for key in self.hist_trade.columns:
+            new_entry[key] = 0
+
+        new_entry[key] = stock_amount
+
+        self.hist_trade = pd.concat([self.hist_trade,
+                                     pd.DataFrame(new_entry).transpose().rename(date)])
+        self.hist_trade = self.hist_trade.rename_axis('Date')
+
 
 class BotMovingAverage(BotTemplate):
     def __init__(self, start_cash, stock_size: int, window_size: int):
