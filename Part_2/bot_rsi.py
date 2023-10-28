@@ -20,17 +20,22 @@ class BotRSI(BotTemplate):
 
         # If relative strength index <= 30, means oversold: so buy
         if rsi <= 30:
-            self.buy(stock_ticker, hist_data)
+            stock_amount = self.buy(stock_ticker, hist_data)
 
         # If relative strength index >= 80, means overbought: so sell
         elif rsi >= 80:
-            self.sell(stock_ticker, hist_data)
+            stock_amount = self.sell(stock_ticker, hist_data)
 
         # Else: not overbought or oversold, so do nothing
         else:
-            pass
+            stock_amount = 0
 
         self.calc_worth(hist_data)
+
+        current_date = hist_data.index[-1]
+        self.save_hist(stock_ticker, -1 * stock_amount, current_date)
+
+
 
     def calculate_rsi(self, hist_data: pd.DataFrame):
         """Calculates the RSI of a set of stock_data values and returns the current RSI"""

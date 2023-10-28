@@ -46,16 +46,20 @@ class BotTemplate:
     def buy(self, stock_ticker, hist_data):
         current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
         stock_amount = math.floor(self.cash / current_stock_price)
-        value = stock_amount * current_stock_price
+        total_stock_value = stock_amount * current_stock_price
         self.stocks[stock_ticker] = self.stocks[stock_ticker] + stock_amount  # add stock
-        self.cash = self.cash - value  # subtract cash
+        self.cash = self.cash - total_stock_value  # subtract cash
+
+        return stock_amount
 
     def sell(self, stock_ticker, hist_data):
         current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
-        value = self.stocks[stock_ticker] * current_stock_price
+        total_stock_value = self.stocks[stock_ticker] * current_stock_price
         stock_amount = self.stocks[stock_ticker]
         self.stocks[stock_ticker] = 0
-        self.cash = self.cash + value
+        self.cash = self.cash + total_stock_value
+
+        return -1 * stock_amount
 
     def save_hist(self, key, stock_amount, date):
         """
@@ -64,17 +68,17 @@ class BotTemplate:
         :param stock_amount: amount of stock bought or sold (negative values is sold)
         :param date: the time stamp for this save
         """
-        # make new entry and fill with correct keys
+        # Make new entry and fill with correct keys
         new_entry = pd.Series(self.stocks).astype('float64')
-        new_entry['cash'] = self.cash
-        new_entry['value'] = self.value
         for key in self.hist_trade.columns:
             new_entry[key] = 0
-
+        new_entry['cash'] = self.cash
+        new_entry['value'] = self.value
         new_entry[key] = stock_amount
 
+        row_date = {0: date}
         self.hist_trade = pd.concat([self.hist_trade,
-                                     pd.DataFrame(new_entry).transpose().rename(date)])
+                                     pd.DataFrame(new_entry).transpose().rename(row_date)])
         self.hist_trade = self.hist_trade.rename_axis('Date')
 
 
