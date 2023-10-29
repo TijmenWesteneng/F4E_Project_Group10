@@ -61,10 +61,10 @@ class BotTemplate:
 
         return -1 * stock_amount
 
-    def save_hist(self, key, stock_amount, date):
+    def save_hist(self, ticker, stock_amount, date):
         """
         Save history for each time step
-        :param key: name of stock
+        :param ticker: name of stock
         :param stock_amount: amount of stock bought or sold (negative values is sold)
         :param date: the time stamp for this save
         """
@@ -74,7 +74,7 @@ class BotTemplate:
             new_entry[key] = 0
         new_entry['cash'] = self.cash
         new_entry['value'] = self.value
-        new_entry[key] = stock_amount
+        new_entry[ticker] = stock_amount
 
         row_date = {0: date}
         self.hist_trade = pd.concat([self.hist_trade,
