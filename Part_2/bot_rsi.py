@@ -12,7 +12,7 @@ class BotRSI(BotTemplate):
         """
         # Inherit the class BotTemplate
         super().__init__(start_cash, stock_size)
-        self.alfa = 14
+        self.alfa = window_size
 
     def trade(self, hist_data: pd.DataFrame):
         rsi = self.calculate_rsi(hist_data)
@@ -23,7 +23,7 @@ class BotRSI(BotTemplate):
             stock_amount = self.buy(stock_ticker, hist_data)
 
         # If relative strength index >= 70, means overbought: so sell
-        elif rsi >= 80:
+        elif rsi >= 70:
             stock_amount = self.sell(stock_ticker, hist_data)
 
         # Else: not overbought or oversold, so do nothing
