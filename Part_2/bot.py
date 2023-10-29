@@ -65,7 +65,7 @@ class BotTemplate:
     def save_hist(self, ticker, stock_amount, date, var_data=0):
         """
         Save history for each time step
-        :param key: name of stock
+        :param ticker: name of stock
         :param stock_amount: amount of stock bought or sold (negative values is sold)
         :param date: the time stamp for this save
         :param var_data: the data where the decision was based on, e.g. RSI. = 0 if not specified

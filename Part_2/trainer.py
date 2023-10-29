@@ -1,6 +1,7 @@
 import pandas as pd
 from simulator import Simulator
 from bot import *
+from bot_dhl import *
 
 
 class Trainer:
@@ -16,7 +17,8 @@ class Trainer:
         """
 
         # Create the bots with a threshold
-        self.bot_list = [BotMovingAverage(start_cash, stock_amount, i) for i in range(2, bot_amount + 2)]
+        # self.bot_list = [BotMovingAverage(start_cash, stock_amount, i) for i in range(2, bot_amount + 2)]
+        self.bot_list = [BotDHL(start_cash, stock_amount, i) for i in range(2, bot_amount + 2)]
 
         # Create the sim
         self.sim = Simulator(self.bot_list, stock_amount, start_date, end_date, interval)
