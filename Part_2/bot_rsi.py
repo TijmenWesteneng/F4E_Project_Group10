@@ -22,7 +22,7 @@ class BotRSI(BotTemplate):
         if rsi <= 30:
             stock_amount = self.buy(stock_ticker, hist_data)
 
-        # If relative strength index >= 80, means overbought: so sell
+        # If relative strength index >= 70, means overbought: so sell
         elif rsi >= 80:
             stock_amount = self.sell(stock_ticker, hist_data)
 
@@ -33,14 +33,13 @@ class BotRSI(BotTemplate):
         self.calc_worth(hist_data)
 
         current_date = hist_data.index[-1]
-        self.save_hist(stock_ticker, -1 * stock_amount, current_date)
-
-
+        self.save_hist(stock_ticker, -1 * stock_amount, current_date, rsi)
 
     def calculate_rsi(self, hist_data: pd.DataFrame):
         """Calculates the RSI of a set of stock_data values and returns the current RSI"""
-        # Only extract the first stock column from the historic data
+        # Only extract the first stock column from the historic data & reverse it for moving average calculations
         hist_data = hist_data[hist_data.columns[0]]
+        hist_data = hist_data[::-1]
 
         # Get the row-to-row change of historic data as a dataframe and remove NaNs
         change_data = hist_data.diff()
@@ -52,7 +51,7 @@ class BotRSI(BotTemplate):
 
         # Replace all values of change_up lower than 0 with 0 and vice-versa
         change_up[change_up < 0] = 0
-        change_down[change_up > 0] = 0
+        change_down[change_down > 0] = 0
 
         # Make sure window is never be bigger than the current available data
         if len(hist_data.index) < self.alfa:
@@ -65,7 +64,7 @@ class BotRSI(BotTemplate):
         avg_down = change_down.rolling(window).mean().abs()
 
         # Calculate the RSI over time
-        rsi = 100 * avg_up / (avg_up + avg_down)
+        rsi = 100 - 100 / (1 + (avg_up / avg_down))
 
-        # Return the last (current) value of the RSI
-        return rsi.iloc[len(rsi) - 1]
+        # Return current value of the RSI
+        return rsi.iloc[window - 1]
