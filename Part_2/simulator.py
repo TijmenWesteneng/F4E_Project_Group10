@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 import os.path
 import datetime
@@ -30,7 +32,7 @@ class Simulator:
         self.interval = interval
 
         # Amount of dataframe entries given to bots in first cycle
-        self.history = 10
+        self.history = 15
 
         self.stock_data = self.get_stock_data()
         print(self.stock_data)
@@ -47,6 +49,7 @@ class Simulator:
 
         # Plot the graphs using plotly
         self.plot_value_graphs()
+        self.plot_rsi_graphs()
 
     def sim_cycle(self, current_stock_data):
         """Everything that happens during one cycle of the simulation"""
@@ -117,15 +120,51 @@ class Simulator:
         # Looping over all the bots to get the data needed to plot
         df_bot_values = pd.DataFrame()
         for bot in self.bot_array:
-            df_bot_values[bot.alfa] = bot.hist_trade['value']
             df_bot_values['date'] = list(bot.hist_trade.index.values)
+            df_bot_values[bot.alfa] = bot.hist_trade['value'].values
 
-        # Getting stock data to plot value if stocks bought at beginning and not sold
-        df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]]
+        # Getting stock data to plot value if stocks bought at beginning and not sold & normalize to start_cash
+        df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]]\
+            .tail(len(df_bot_values)).values
         df_bot_values[self.stock_data.columns[0]] = \
             df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[self.history - 1, 0])
 
         fig = px.line(df_bot_values, x='date', y=df_bot_values.columns)
+        fig.show()
+
+    def plot_rsi_graphs(self):
+
+        df_stock_price = pd.DataFrame(self.stock_data[self.stock_data.columns[0]])
+        df_stock_price['Date'] = self.stock_data.index.values
+
+        # Create figure with secondary y-axis
+        fig = make_subplots(rows=2, cols=1)
+
+        # Looping over all the bots and add var_data to the plot
+        for bot in self.bot_array:
+            fig.add_trace(
+                go.Scatter(x=df_stock_price['Date'], y=df_stock_price[self.stock_data.columns[0]],
+                           name=str("Price of " + str(self.stock_data.columns[0]))), row=1, col=1
+            )
+
+            fig.add_trace(
+                go.Scatter(x=df_stock_price['Date'], y=bot.hist_trade['var'],
+                           name=str('RSI of bot ' + str(bot.alfa))), row=2, col=1
+            )
+
+        # Set the RSI axes to range from 0 to 100
+        fig.update_yaxes(range=[0, 100], row=2, col=1)
+
+        # Add horizontal RSI lines
+        fig.add_hline(y=70, line_width=2, line_dash="dash", line_color="red", row=2, col=1)
+        fig.add_hline(y=30, line_width=2, line_dash="dash", line_color="green", row=2, col=1)
+
+        # Add figure title
+        fig.update_layout(title_text="RSI & Stock Price over Time")
+
+        # Set y-axes titles
+        fig.update_yaxes(title_text="<b>RSI</b>", row=2, col=1)
+        fig.update_yaxes(title_text="<b>Stock Price</b>", row=1, col=1)
         fig.show()
 
     def read_price_data(self, stock_symbol, start_date, end_date, interval):

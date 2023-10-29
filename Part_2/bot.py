@@ -18,6 +18,7 @@ class BotTemplate:
         self.hist_trade = pd.DataFrame()  # All the trade history of the bot
         self.hist_trade['cash'] = self.cash  # All the historical value of the bot
         self.hist_trade['value'] = self.cash  # All the historical cash of the bot
+        self.hist_trade['var'] = 0 # All the historical variables of the bot
 
     def initiate(self, name_list: list):
         """
@@ -61,12 +62,13 @@ class BotTemplate:
 
         return -1 * stock_amount
 
-    def save_hist(self, key, stock_amount, date):
+    def save_hist(self, ticker, stock_amount, date, var_data=0):
         """
         Save history for each time step
         :param key: name of stock
         :param stock_amount: amount of stock bought or sold (negative values is sold)
         :param date: the time stamp for this save
+        :param var_data: the data where the decision was based on, e.g. RSI. = 0 if not specified
         """
         # Make new entry and fill with correct keys
         new_entry = pd.Series(self.stocks).astype('float64')
@@ -74,7 +76,8 @@ class BotTemplate:
             new_entry[key] = 0
         new_entry['cash'] = self.cash
         new_entry['value'] = self.value
-        new_entry[key] = stock_amount
+        new_entry['var'] = var_data
+        new_entry[ticker] = stock_amount
 
         row_date = {0: date}
         self.hist_trade = pd.concat([self.hist_trade,
