@@ -46,7 +46,7 @@ class Simulator:
             self.sim_cycle(self.stock_data.iloc[:i])
 
         # Plot the graphs using plotly
-        self.plot_trade_graphs()
+        self.plot_value_graphs()
 
     def sim_cycle(self, current_stock_data):
         """Everything that happens during one cycle of the simulation"""
@@ -113,7 +113,7 @@ class Simulator:
 
         return pd.concat(df_list)
 
-    def plot_trade_graphs(self):
+    def plot_value_graphs(self):
         # Looping over all the bots to get the data needed to plot
         df_bot_values = pd.DataFrame()
         for bot in self.bot_array:
@@ -123,7 +123,7 @@ class Simulator:
         # Getting stock data to plot value if stocks bought at beginning and not sold
         df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]]
         df_bot_values[self.stock_data.columns[0]] = \
-            df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[0, 0])
+            df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[self.history - 1, 0])
 
         fig = px.line(df_bot_values, x='date', y=df_bot_values.columns)
         fig.show()
