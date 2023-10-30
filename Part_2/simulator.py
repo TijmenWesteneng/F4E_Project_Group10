@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.express as px
@@ -6,8 +5,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 import os.path
-import datetime
-import time
 from dateutil.relativedelta import relativedelta
 
 from sp500 import get_sp500_tickers
@@ -60,65 +57,87 @@ class Simulator:
 
     def get_stock_data(self):
         """Gets stock data from yahoo finance and puts it in a dataframe"""
+        # Get the first x amount of tickers from the S&P500 index
         tickers = get_sp500_tickers(self.stock_amount)
 
+        # Generate a filename based on the amount of stocks, the interval and the start and end date
         filename = str(str(self.stock_amount) + "_" + self.interval + "_" +
                        self.start_date.strftime("%m-%d-%Y") + "_" +
                        self.end_date.strftime("%m-%d-%Y") + ".csv")
 
+        # Check if that csv file already exists, which means that the data has been requested before
         if not self.load_df(filename).empty:
+            # Load the data from this existing csv file into a dataframe and return it
             return self.load_df(filename)
         else:
+            # If it doesn't exist yet: request the data and save it into a csv file for later use
             stock_data = self.download_stock_data_loop(tickers, self.start_date, self.end_date, self.interval)
             self.save_df(stock_data, filename)
             return stock_data
 
     def download_stock_data_loop(self, tickers, start_date, end_date, interval):
         """Downloads stock data from yahoo finance using loops if more than max data_amount per request is needed"""
+        # Create a list where the dataframes will be stored that have to be concatenated
         df_list = list()
+
+        # Calculate the time between the start and end date in days
         timespan = end_date - start_date
         days = timespan.days
 
+        # The maximum amount of data that can be requested depends on the interval
         if interval == "1m":
+            # Max for interval of 1 minute is 7 days of data, so if less just return data from one request
             if days <= 7:
                 return self.read_price_data(tickers, start_date, end_date, interval)
             else:
+                # Divide the total time up into segments of 7 days (max request time)
                 current_start_date = start_date
                 current_end_date = current_start_date + relativedelta(days=7)
+
+                # While not yet all the timespan has been covered: download all data for 7 days, then go to next 7 days
                 while current_end_date < end_date:
                     df = self.read_price_data(tickers, current_start_date, current_end_date, interval)
                     df_list.append(df)
                     current_start_date = current_end_date
                     current_end_date = current_start_date + relativedelta(days=7)
 
+                # If total timespan is not a multiple of 7 days the rest of the time still has to be downloaded
                 if current_start_date != end_date:
                     df = self.read_price_data(tickers, current_start_date, end_date, interval)
                     df_list.append(df)
 
         elif interval == "2m" or interval == "5m" or interval == "15m" or interval == "30m" or interval == "60m" \
                 or interval == "90m" or interval == "1h":
+            # Max for interval lower than 1 day is 60 days of data, so if less just return data from one request
             if days <= 60:
                 return self.read_price_data(tickers, start_date, end_date, interval)
             else:
+                # Divide the total time up into segments of 60 days (max request time)
                 current_start_date = start_date
                 current_end_date = current_start_date + relativedelta(days=60)
+
+                # While not all the timespan has been covered: download all data for 60 days, then go to next 60 days
                 while current_end_date < end_date:
                     df = self.read_price_data(tickers, current_start_date, current_end_date, interval)
                     df_list.append(df)
                     current_start_date = current_end_date
                     current_end_date = current_start_date + relativedelta(days=60)
 
+                # If there is still a bit of not downloaded time left: request the data for the rest of the time
                 if current_start_date != end_date:
                     df = self.read_price_data(tickers, current_start_date, end_date, interval)
                     df_list.append(df)
 
+        # All intervals of 1 day or more can just download all data at once, so return the data from that request
         else:
             return self.read_price_data(tickers, start_date, end_date, interval)
 
+        # Concatenate all the individual dataframes from the list into one dataframe and return it
         return pd.concat(df_list)
 
     def plot_value_graphs(self):
-        # Looping over all the bots to get the data needed to plot
+        """Plots the value of all bots over time together with the value if stock was bought and held the whole time"""
+        # Looping over all the bots and plot the value of the bots in a graph
         df_bot_values = pd.DataFrame()
         fig = go.Figure()
         for bot in self.bot_array:
@@ -134,9 +153,11 @@ class Simulator:
         df_bot_values[self.stock_data.columns[0]] = \
             df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[self.history - 1, 0])
 
+        # Add the stock price as a line in the plot
         fig.add_scatter(x=df_bot_values['date'], y=df_bot_values[self.stock_data.columns[0]],
                         name=str("Stock Price of " + str(self.stock_data.columns[0])))
 
+        # Set the title and axis labels of the plot
         fig.update_layout(title="Value over Time")
         fig.update_yaxes(title_text="<b>Value</b>")
         fig.update_xaxes(title_text="<b>Date</b>")
@@ -144,19 +165,23 @@ class Simulator:
         fig.show()
 
     def plot_mov_avg_graphs(self):
-        # Looping over all the bots to get the data needed to plot moving averages
+        """Plots the moving averages of the BotMovingAverage bots together with the stock price"""
+        # Looping over all the bots and plot the moving averages saved in hist_trade['var']
         df_bot_values = pd.DataFrame()
         fig = go.Figure()
         for bot in self.bot_array:
             df_bot_values['date'] = list(bot.hist_trade.index.values)
-            # Check if class is of type BotRSI and otherwise don't plot the RSI
+            # Check if class is of type BotMovingAverage and otherwise don't plot the moving average
             if bot.__class__.__name__ == "BotMovingAverage":
                 fig.add_trace(
                     go.Scatter(x=df_bot_values['date'], y=bot.hist_trade['var'],
                                name=str('Moving Average of bot ' + str(bot.alfa)))
                 )
 
+        # Make the lines dotted, so the moving averages are distinguishable from the stock price line
         fig.update_traces(patch={"line": {"width": 2, "dash": 'dot'}})
+
+        # Set title and axis titles of the graph
         fig.update_layout(title="Moving average & Stock Price over Time")
         fig.update_yaxes(title_text="<b>Stock Price</b>")
         fig.update_xaxes(title_text="<b>Date</b>")
@@ -174,6 +199,7 @@ class Simulator:
 
     def plot_rsi_graphs(self):
         """Plots the RSI calculation of a bot over time together with the stock price over time"""
+        # Create a dataframe with the stock price over time in it and the dates, handy for plotting
         df_stock_price = pd.DataFrame(self.stock_data[self.stock_data.columns[0]])
         df_stock_price['Date'] = self.stock_data.index.values
 
@@ -225,14 +251,12 @@ class Simulator:
         return prices
 
     def save_df(self, df: pd.DataFrame, filename):
+        """Saves a dataframe as a cvs file and returns it"""
         df.to_csv(filename)
 
     def load_df(self, filename):
+        """Loads a dataframe from a csv file and returns it"""
         if not os.path.isfile(filename):
             return pd.DataFrame
 
         return pd.read_csv(filename, index_col=0)
-
-
-# sim = Simulator("bot_arr", 10, datetime.date(2023, 10, 23) - relativedelta(days=121), datetime.date(2023, 10, 23), '1h')
-# sim.simulate()

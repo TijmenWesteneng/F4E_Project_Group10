@@ -15,6 +15,7 @@ class BotRSI(BotTemplate):
         self.alfa = window_size
 
     def trade(self, hist_data: pd.DataFrame):
+        """Lets the bot either buy a stock, sell a stock or do nothing based on the RSI (overbought / oversold)"""
         rsi = self.calculate_rsi(hist_data)
         stock_ticker = hist_data.columns[0]
 
@@ -30,8 +31,10 @@ class BotRSI(BotTemplate):
         else:
             stock_amount = 0
 
+        # Calculate the current value after buying or selling / stock movements
         self.calc_worth(hist_data)
 
+        # Save the data in the history
         current_date = hist_data.index[-1]
         self.save_hist(stock_ticker, -1 * stock_amount, current_date, rsi)
 
