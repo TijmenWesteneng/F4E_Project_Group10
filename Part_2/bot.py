@@ -111,6 +111,7 @@ class BotMovingAverage(BotTemplate):
         new_entry = pd.Series(self.stocks).astype('float64')
         new_entry['cash'] = 0
         new_entry['value'] = 0
+        new_entry['var'] = 0
         for key in self.hist_trade.columns:
             new_entry[key] = 0
 
@@ -146,6 +147,7 @@ class BotMovingAverage(BotTemplate):
 
         new_entry['cash'] = self.cash
         new_entry['value'] = self.value
+        new_entry['var'] = moving_average.at[key]
 
         row_date = {0: hist_data.index[-1]}
 

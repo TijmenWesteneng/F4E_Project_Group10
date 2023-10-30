@@ -50,6 +50,7 @@ class Simulator:
         # Plot the graphs using plotly
         self.plot_value_graphs()
         self.plot_rsi_graphs()
+        self.plot_mov_avg_graphs()
 
     def sim_cycle(self, current_stock_data):
         """Everything that happens during one cycle of the simulation"""
@@ -119,9 +120,13 @@ class Simulator:
     def plot_value_graphs(self):
         # Looping over all the bots to get the data needed to plot
         df_bot_values = pd.DataFrame()
+        fig = go.Figure()
         for bot in self.bot_array:
             df_bot_values['date'] = list(bot.hist_trade.index.values)
-            df_bot_values[bot.alfa] = bot.hist_trade['value'].values
+            fig.add_trace(
+                go.Scatter(x=df_bot_values['date'], y=bot.hist_trade['value'],
+                           name=str(bot.__class__.__name__ + " " + str(bot.alfa)))
+            )
 
         # Getting stock data to plot value if stocks bought at beginning and not sold & normalize to start_cash
         df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]]\
@@ -129,11 +134,46 @@ class Simulator:
         df_bot_values[self.stock_data.columns[0]] = \
             df_bot_values[self.stock_data.columns[0]] * (100000 / self.stock_data.iat[self.history - 1, 0])
 
-        fig = px.line(df_bot_values, x='date', y=df_bot_values.columns)
+        fig.add_scatter(x=df_bot_values['date'], y=df_bot_values[self.stock_data.columns[0]],
+                        name=str("Stock Price of " + str(self.stock_data.columns[0])))
+
+        fig.update_layout(title="Value over Time")
+        fig.update_yaxes(title_text="<b>Value</b>")
+        fig.update_xaxes(title_text="<b>Date</b>")
+
         fig.show()
 
-    def plot_rsi_graphs(self):
+    def plot_mov_avg_graphs(self):
+        # Looping over all the bots to get the data needed to plot moving averages
+        df_bot_values = pd.DataFrame()
+        fig = go.Figure()
+        for bot in self.bot_array:
+            df_bot_values['date'] = list(bot.hist_trade.index.values)
+            # Check if class is of type BotRSI and otherwise don't plot the RSI
+            if bot.__class__.__name__ == "BotMovingAverage":
+                fig.add_trace(
+                    go.Scatter(x=df_bot_values['date'], y=bot.hist_trade['var'],
+                               name=str('Moving Average of bot ' + str(bot.alfa)))
+                )
 
+        fig.update_traces(patch={"line": {"width": 2, "dash": 'dot'}})
+        fig.update_layout(title="Moving average & Stock Price over Time")
+        fig.update_yaxes(title_text="<b>Stock Price</b>")
+        fig.update_xaxes(title_text="<b>Date</b>")
+
+        # Getting stock price data
+        df_bot_values[self.stock_data.columns[0]] = self.stock_data[self.stock_data.columns[0]] \
+            .tail(len(df_bot_values)).values
+
+        # Plotting the stock price over time
+        fig.add_scatter(x=df_bot_values['date'], y=df_bot_values[self.stock_data.columns[0]],
+                        name=str("Stock Price of " + str(self.stock_data.columns[0])))
+
+        fig.show()
+
+
+    def plot_rsi_graphs(self):
+        """Plots the RSI calculation of a bot over time together with the stock price over time"""
         df_stock_price = pd.DataFrame(self.stock_data[self.stock_data.columns[0]])
         df_stock_price['Date'] = self.stock_data.index.values
 
@@ -142,15 +182,18 @@ class Simulator:
 
         # Looping over all the bots and add var_data to the plot
         for bot in self.bot_array:
-            fig.add_trace(
-                go.Scatter(x=df_stock_price['Date'], y=df_stock_price[self.stock_data.columns[0]],
-                           name=str("Price of " + str(self.stock_data.columns[0]))), row=1, col=1
-            )
+            # Check if class is of type BotRSI and otherwise don't plot the RSI
+            if bot.__class__.__name__ == "BotRSI":
+                fig.add_trace(
+                    go.Scatter(x=df_stock_price['Date'], y=bot.hist_trade['var'],
+                               name=str('RSI of bot ' + str(bot.alfa))), row=2, col=1
+                )
 
-            fig.add_trace(
-                go.Scatter(x=df_stock_price['Date'], y=bot.hist_trade['var'],
-                           name=str('RSI of bot ' + str(bot.alfa))), row=2, col=1
-            )
+        # Add stock price graph to be able to view it together with the RSI
+        fig.add_trace(
+            go.Scatter(x=df_stock_price['Date'], y=df_stock_price[self.stock_data.columns[0]],
+                       name=str("Stock Price of " + str(self.stock_data.columns[0]))), row=1, col=1
+        )
 
         # Set the RSI axes to range from 0 to 100
         fig.update_yaxes(range=[0, 100], row=2, col=1)
@@ -162,9 +205,11 @@ class Simulator:
         # Add figure title
         fig.update_layout(title_text="RSI & Stock Price over Time")
 
-        # Set y-axes titles
+        # Set y-axes & x-axes titles
         fig.update_yaxes(title_text="<b>RSI</b>", row=2, col=1)
         fig.update_yaxes(title_text="<b>Stock Price</b>", row=1, col=1)
+        fig.update_xaxes(title_text="<b>Date</b>")
+
         fig.show()
 
     def read_price_data(self, stock_symbol, start_date, end_date, interval):
