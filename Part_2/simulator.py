@@ -1,6 +1,6 @@
 import pandas as pd
 import yfinance as yf
-import plotly.express as px
+# import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -8,22 +8,22 @@ import os.path
 from dateutil.relativedelta import relativedelta
 
 from sp500 import get_sp500_tickers
-from bot import *
+from bot import BotTemplate
 
 
 class Simulator:
 
-    def __init__(self, bot_array: list[BotTemplate], stock_amount: int, start_date, end_date, interval):
+    def __init__(self, bot_array: list[BotTemplate], stock_ticker, start_date, end_date, interval):
         """
         Creates a simulator object using specified parameters
         :param bot_array: array with bot objects used in simulation
-        :param stock_amount: integer amount of stocks to simulate on (from S&P500)
+        :param stock_ticker: integer amount of stocks to simulate on (from S&P500)
         :param start_date: date to start simulation from (historical data)
         :param end_date: date to stop simulation (e.g. today)
         :param interval: interval between simulation data points
         """
         self.bot_array = bot_array
-        self.stock_amount = stock_amount
+        self.stock_ticker = stock_ticker
         self.start_date = start_date
         self.end_date = end_date
         self.interval = interval
@@ -57,11 +57,17 @@ class Simulator:
 
     def get_stock_data(self):
         """Gets stock data from yahoo finance and puts it in a dataframe"""
-        # Get the first x amount of tickers from the S&P500 index
-        tickers = get_sp500_tickers(self.stock_amount)
+        # If stock_ticker is number: get first x amount of stocks from S&P500
+        if isinstance(self.stock_ticker, int):
+            # Get the first x amount of tickers from the S&P500 index
+            tickers = get_sp500_tickers(self.stock_ticker)
+
+        # Else it is a string, so use the specified stock_ticker and add ^GSPC
+        else:
+            tickers = [self.stock_ticker, "^GSPC"]
 
         # Generate a filename based on the amount of stocks, the interval and the start and end date
-        filename = str(str(self.stock_amount) + "_" + self.interval + "_" +
+        filename = str(str(self.stock_ticker) + "_" + self.interval + "_" +
                        self.start_date.strftime("%m-%d-%Y") + "_" +
                        self.end_date.strftime("%m-%d-%Y") + ".csv")
 

@@ -4,14 +4,13 @@ import pandas as pd
 
 class BotRSI(BotTemplate):
 
-    def __init__(self, start_cash, stock_size: int, window_size: int):
+    def __init__(self, start_cash, window_size: int):
         """
         Creates a specific trading strategy bot
         :param start_cash: double of amount of cash that the bot starts with in the beginning
-        :param stock_size: integer of the amount of unique stocks the program will feed to the bot
         """
         # Inherit the class BotTemplate
-        super().__init__(start_cash, stock_size)
+        super().__init__(start_cash)
         self.alfa = window_size
 
     def trade(self, hist_data: pd.DataFrame):

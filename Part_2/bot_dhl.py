@@ -1,16 +1,16 @@
 import pandas as pd
+
 from bot import BotTemplate
 
 
 class BotDHL(BotTemplate):
-    def __init__(self, start_cash, stock_size: int, window_size: int):
+    def __init__(self, start_cash, window_size: int):
         """
         Creates a bot with daily high low trading strategy
         :param start_cash: double of amount of cash that the bot starts with in the beginning
-        :param stock_size: integer of the amount of unique stocks the program will feed to the bot
         :param window_size: integer of the length of the 'day'
         """
-        super().__init__(start_cash, stock_size)  # Inherit the class BotTemplate
+        super().__init__(start_cash)  # Inherit the class BotTemplate
         self.last_daily_low = 0
         self.last_daily_high = 0
         self.alfa = window_size
