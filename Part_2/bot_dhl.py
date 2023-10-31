@@ -36,12 +36,12 @@ class BotDHL(BotTemplate):
             self.dhl(last_day)  # recalculate last daily high low
             self.is_first = 0  # reset is first time
 
-        # if the value now is more then the last daily high, buy
+        # if the value now is more than the last daily high, buy
         if hist_data.iloc[-1, 0] > self.last_daily_high:
             if self.stocks[key] == 0:
                 stock_amount = self.buy(key, hist_data)
 
-        # if the value now is less then the last daily low, sell
+        # if the value now is less than the last daily low, sell
         if hist_data.iloc[-1, 0] < self.last_daily_low:
             if self.stocks[key] != 0:
                 stock_amount = self.sell(key, hist_data)
