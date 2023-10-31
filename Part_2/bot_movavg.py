@@ -24,7 +24,6 @@ class BotMovingAverage(BotTemplate):
         if isinstance(moving_average, int):
             return
 
-        # This is temporary trade function (only works for 1 stock)
         # make new entry
         new_entry = pd.Series(self.stocks).astype('float64')
         new_entry['cash'] = 0
