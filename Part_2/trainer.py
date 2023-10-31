@@ -29,7 +29,7 @@ class Trainer:
         """
         self.sim.simulate()
 
-        # Temporary code
+        # push info to console
         for bot in self.bot_list:
             print(bot.alfa, ":", bot.value)
             print("Historical trade data: \n", bot.hist_trade)
