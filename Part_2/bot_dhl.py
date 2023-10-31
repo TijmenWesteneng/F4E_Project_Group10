@@ -46,6 +46,7 @@ class BotDHL(BotTemplate):
             if self.stocks[key] != 0:
                 stock_amount = self.sell(key, hist_data)
 
+        # save all data for analyzing later
         self.calc_worth(hist_data)
         self.save_hist(key, stock_amount, current_date)  # save history of bot
         self.last_window_check = self.last_window_check + 1  # increase last window check
@@ -55,13 +56,15 @@ class BotDHL(BotTemplate):
         Calculates the daily high low for a given time period
         :param hist_data: matrix of a set of historical values for a given stock
         """
-        self.last_daily_high = self.last_daily_low = hist_data.iloc[0, 0]  # reset values
+        self.last_daily_high = self.last_daily_low = hist_data.iloc[0, 0]  # reset values to first entry of dataframe
 
+        # for each value in this day see if it is a new daily high or low
         for value in hist_data.iloc[1:, 0]:
             if value > self.last_daily_high:
                 self.last_daily_high = value
             if value < self.last_daily_low:
                 self.last_daily_low = value
 
+        # reset the last time the new window was calculated
         self.last_window_check = 0
 

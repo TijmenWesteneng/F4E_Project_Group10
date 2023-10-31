@@ -22,6 +22,8 @@ class BotTemplate:
         Fill stock dataframe with the names of the stocks
         :param name_list: list with all names of the stocks
         """
+
+        # fill stock and hist_trade dataframe with stock tickers
         for name in name_list:
             self.stocks[name] = 0
             self.hist_trade[name] = 0
@@ -31,17 +33,27 @@ class BotTemplate:
         Calculate worth of cash and all stocks combined
         :param hist_data: matrix of a set of historical values for the given stocks
         """
+
+        # begin with the cash
         worth = self.cash
 
+        # add the value of each stock to the worth
         for i in self.stocks:
             stock_amount = self.stocks[i]
             stock_price_row = hist_data.iloc[-1]
             stock_price = stock_price_row[i]
             worth = worth + stock_amount * stock_price
 
+        # save worth
         self.value = worth
 
     def buy(self, stock_ticker, hist_data):
+        """
+        Buy stock and save to bot variables
+        :param stock_ticker: key of stock to buy
+        :param hist_data: historical data to see what the value of the stock is
+        """
+
         current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
         stock_amount = math.floor(self.cash / current_stock_price)
         total_stock_value = stock_amount * current_stock_price
@@ -51,6 +63,12 @@ class BotTemplate:
         return stock_amount
 
     def sell(self, stock_ticker, hist_data):
+        """
+        Sell stock and save to bot variables
+        :param stock_ticker: key of stock to sell
+        :param hist_data: historical data to see what the value of the stock is
+        """
+
         current_stock_price = hist_data.iloc[-1].loc[stock_ticker]
         total_stock_value = self.stocks[stock_ticker] * current_stock_price
         stock_amount = self.stocks[stock_ticker]
